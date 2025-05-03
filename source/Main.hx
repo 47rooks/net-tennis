@@ -23,7 +23,12 @@ class Main extends Sprite
 	}
 
 	function parseCliArgs():Void {
-		final USAGE = '${Sys.programPath()} [-h] [-i IP address -p port]';
+		final PROGRAM_PATH = Sys.programPath();
+		var PROGRAM = PROGRAM_PATH.indexOf('/') != -1 ? 
+			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('/') + 1) :
+			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('\\') + 1);
+
+		final USAGE = '${PROGRAM} [-h] [-i IP address -p port]';
 		var args = Sys.args();
 		var i = 0;
 		while (i < Sys.args().length) {
