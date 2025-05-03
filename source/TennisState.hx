@@ -23,6 +23,16 @@ class TennisState extends FlxState
 	var _leftPoints = 0;
 	var _rightPoints = 0;
 
+	var _ipAddr:Null<String> = null;
+	var _port:Null<Int> = null;
+	var _server:Bool;
+
+	public function new(?ipAddr:Null<String>, ?port:Null<Int>) {
+		_ipAddr = ipAddr;
+		_port = port;
+		super();
+	}
+
 	override public function create()
 	{
 		super.create();
