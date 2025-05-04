@@ -2,6 +2,7 @@ package;
 
 // import crashdumper.CrashDumper;
 // import crashdumper.SessionData;
+import haxe.ValueException;
 import flixel.FlxGame;
 import openfl.display.Sprite;
 
@@ -17,43 +18,45 @@ class Main extends Sprite
 		// var unique_id:String = SessionData.generateID("NetTennis_");
 		// var crashDumper = new CrashDumper(unique_id);
 
-		parseCliArgs();
+		parseCliArgs(Sys.args());
 
 		addChild(new FlxGame(0, 0, () -> new TennisState(_ipAddr, _port)));
 	}
 
-	function parseCliArgs():Void {
+	function parseCliArgs(args:Array<String>):Void {
 		final PROGRAM_PATH = Sys.programPath();
 		var PROGRAM = PROGRAM_PATH.indexOf('/') != -1 ? 
 			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('/') + 1) :
 			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('\\') + 1);
 
 		final USAGE = '${PROGRAM} [-h] [-i IP address -p port]';
-		var args = Sys.args();
 		var i = 0;
-		while (i < Sys.args().length) {
+		while (i < args.length) {
 			if (args[i] == "-h") {
 				Sys.println(USAGE);
 				Sys.exit(0);
 			} else if (args[i] == "-i") {
 				i++;
+				// Validate IP as v4 only for now
+				var re = ~/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/;
+				if (!re.match(args[i])) {
+					throw new ValueException('Bad IP: ${args[i]}');
+				}
 				_ipAddr = args[i];
 			} else if (args[i] == "-p") {
 				i++;
 				_port = Std.parseInt(args[i]);
-				trace('port=${_port}');
 				if (_port == null) {
-					Sys.println('Invalid port number: ${args[i]}');
-					Sys.exit(-1);
+					throw new ValueException('Invalid port number: ${args[i]}');
 				}
+			} else {
+				throw new ValueException('Invalid argument found ${args[i]}');
 			}
 			i++;
 		}
 		if ((_ipAddr != null && _port == null) ||
 		    (_ipAddr == null && _port != null)) {
-			Sys.print("Either ipAddr and port must be specified, ");
-			Sys.println(" or neither must be specified.");
-			Sys.exit(-1);
+			throw new ValueException("Either ipAddr and port must be specified," + " or neither must be specified.");
 		} else if (_ipAddr != null && _port != null) {
 			Sys.println('ip=${_ipAddr}, port=${_port}');
 		}

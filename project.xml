@@ -4,7 +4,8 @@
 
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="NetTennis" file="NetTennis" main="Main" version="0.1.0" company="Rookery Games" />
+	<app title="NetTennis" file="NetTennis" main="Main" version="0.1.0" company="Rookery Games" unless="test" />
+	<app title="NetTennisTests" file="NetTennisTests" main="TestAll" version="0.1.0" company="Rookery Games" if="test" />
 
 	<!--The flixel preloader is not accurate in Chrome. You can use it regularly if you embed the swf into a html file
 		or you can set the actual size of your file manually at "FlxPreloaderBase-onUpdate-bytesTotal"-->
@@ -32,11 +33,13 @@
 	<set name="BUILD_DIR" value="export" />
 	<source path="source" />
 	<assets path="assets" />
+	<source path="tests"/>
 
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
 	<!-- <haxelib name="crashdumper"/> -->
+	<haxelib name="utest" />
 
 	<!--In case you want to use the addons package-->
 	<!--<haxelib name="flixel-addons" />-->
