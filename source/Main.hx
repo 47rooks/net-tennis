@@ -10,6 +10,7 @@ class Main extends Sprite
 {
 	var _ipAddr:Null<String> = null;
 	var _port:Null<Int> = null;
+	var _server:Bool = false;
 
 	public function new()
 	{
@@ -20,7 +21,7 @@ class Main extends Sprite
 
 		parseCliArgs(Sys.args());
 
-		addChild(new FlxGame(0, 0, () -> new TennisState(_ipAddr, _port)));
+		addChild(new FlxGame(0, 0, () -> new TennisState(_ipAddr, _port, _server)));
 	}
 
 	function parseCliArgs(args:Array<String>):Void {
@@ -29,7 +30,13 @@ class Main extends Sprite
 			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('/') + 1) :
 			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('\\') + 1);
 
-		final USAGE = '${PROGRAM} [-h] [-i IP address -p port]';
+		final USAGE = '${PROGRAM} [-h] [-i IP address -p port [-s]]\n' +
+			'-h            Print this usage message\n' +
+			'-i <IP_ADDR>  IP address to listen on or connect to\n' +
+			'-p <PORT>     port number to listen on or connect to\n' +
+			'-s            start as server and listen on ip:port\n' +
+			'              if not specified then connect to ip:port';
+
 		var i = 0;
 		while (i < args.length) {
 			if (args[i] == "-h") {
@@ -49,6 +56,8 @@ class Main extends Sprite
 				if (_port == null) {
 					throw new ValueException('Invalid port number: ${args[i]}');
 				}
+			} else if (args[i] == "-s") {
+				_server = true;
 			} else {
 				throw new ValueException('Invalid argument found ${args[i]}');
 			}
@@ -57,8 +66,10 @@ class Main extends Sprite
 		if ((_ipAddr != null && _port == null) ||
 		    (_ipAddr == null && _port != null)) {
 			throw new ValueException("Either ipAddr and port must be specified," + " or neither must be specified.");
+		} else if (_server && (_ipAddr == null || _port == null)) {
+			throw new ValueException("-s may only be specified with -i and -p");
 		} else if (_ipAddr != null && _port != null) {
-			Sys.println('ip=${_ipAddr}, port=${_port}');
+			Sys.println('ip=${_ipAddr}, port=${_port}, server=${_server}');
 		}
 	}
 }

@@ -25,11 +25,12 @@ class TennisState extends FlxState
 
 	var _ipAddr:Null<String> = null;
 	var _port:Null<Int> = null;
-	var _server:Bool;
+	var _server:Bool = false;
 
-	public function new(?ipAddr:Null<String>, ?port:Null<Int>) {
+	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server=false) {
 		_ipAddr = ipAddr;
 		_port = port;
+		_server = server;
 		super();
 	}
 

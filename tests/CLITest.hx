@@ -74,12 +74,26 @@ class CLITest extends Test {
         },
         ValueException);
     }
+
+    function testInvalidServer() {
+        Assert.raises(() -> {
+            try {
+                _m.parseCliArgs(["-s"]);
+            } catch (e:ValueException) {
+                Assert.equals("-s may only be specified with -i and -p", e.value);
+                throw e;
+            }
+        },
+        ValueException);
+    }
 }
+
+
 
 class SubProcessCLITests extends Test{
 
     function testHelp() {
         var p = new Process("export/linux/bin/NetTennis", ["-h"]);
-        Assert.equals("NetTennis [-h] [-i IP address -p port]", p.stdout.readLine());
+        Assert.equals("NetTennis [-h] [-i IP address -p port [-s]]", p.stdout.readLine());
     }
 }
