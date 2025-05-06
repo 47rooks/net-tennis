@@ -88,8 +88,6 @@ class CLITest extends Test {
     }
 }
 
-
-
 class SubProcessCLITests extends Test{
 
     function testHelp() {
