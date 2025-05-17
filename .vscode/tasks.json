@@ -1,0 +1,19 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "NetTennis Server",
+            "type": "shell",
+            "command": "${workspaceFolder}/export/linux/bin/NetTennis",
+            "args": [
+                "-s",
+                "-i",
+                "127.0.0.1",
+                "-p",
+                "5000"
+            ]
+        }
+    ]
+}

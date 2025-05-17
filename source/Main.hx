@@ -2,6 +2,8 @@ package;
 
 // import crashdumper.CrashDumper;
 // import crashdumper.SessionData;
+import crashdumper.CrashDumper;
+import crashdumper.SessionData;
 import haxe.ValueException;
 import flixel.FlxGame;
 import openfl.display.Sprite;
@@ -16,8 +18,8 @@ class Main extends Sprite
 	{
 		super();
 
-		// var unique_id:String = SessionData.generateID("NetTennis_");
-		// var crashDumper = new CrashDumper(unique_id);
+		var unique_id:String = SessionData.generateID("NetTennis_");
+		var crashDumper = new CrashDumper(unique_id);
 
 		parseCliArgs(Sys.args());
 
