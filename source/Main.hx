@@ -8,14 +8,13 @@ import haxe.ValueException;
 import flixel.FlxGame;
 import openfl.display.Sprite;
 
-class Main extends Sprite
-{
+class Main extends Sprite {
 	var _ipAddr:Null<String> = null;
 	var _port:Null<Int> = null;
 	var _server:Bool = false;
+	var _aiPlayer:Bool = false;
 
-	public function new()
-	{
+	public function new() {
 		super();
 
 		var unique_id:String = SessionData.generateID("NetTennis_");
@@ -23,21 +22,22 @@ class Main extends Sprite
 
 		parseCliArgs(Sys.args());
 
-		addChild(new FlxGame(0, 0, () -> new TennisState(_ipAddr, _port, _server)));
+		addChild(new FlxGame(0, 0, () -> new TennisState(_ipAddr, _port, _server, _aiPlayer)));
 	}
 
 	function parseCliArgs(args:Array<String>):Void {
 		final PROGRAM_PATH = Sys.programPath();
-		var PROGRAM = PROGRAM_PATH.indexOf('/') != -1 ? 
-			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('/') + 1) :
-			PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('\\') + 1);
+		var PROGRAM = PROGRAM_PATH.indexOf('/') != -1 ? PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('/') +
+			1) : PROGRAM_PATH.substring(PROGRAM_PATH.lastIndexOf('\\')
+			+ 1);
 
-		final USAGE = '${PROGRAM} [-h] [-i IP address -p port [-s]]\n' +
-			'-h            Print this usage message\n' +
-			'-i <IP_ADDR>  IP address to listen on or connect to\n' +
-			'-p <PORT>     port number to listen on or connect to\n' +
-			'-s            start as server and listen on ip:port\n' +
-			'              if not specified then connect to ip:port';
+		final USAGE = '${PROGRAM} [-h] [-i IP address -p port [-s]]\n'
+			+ '-h            Print this usage message\n'
+			+ '-i <IP_ADDR>  IP address to listen on or connect to\n'
+			+ '-p <PORT>     port number to listen on or connect to\n'
+			+ '-s            start as server and listen on ip:port\n'
+			+ '              if not specified then connect to ip:port\n'
+			+ '-a            AI player for player 2 (client only)';
 
 		var i = 0;
 		while (i < args.length) {
@@ -60,13 +60,18 @@ class Main extends Sprite
 				}
 			} else if (args[i] == "-s") {
 				_server = true;
+			} else if (args[i] == "-a") {
+				_aiPlayer = true;
 			} else {
 				throw new ValueException('Invalid argument found ${args[i]}');
 			}
 			i++;
 		}
-		if ((_ipAddr != null && _port == null) ||
-		    (_ipAddr == null && _port != null)) {
+
+		if (_aiPlayer && _server) {
+			throw new ValueException("AI player only supported on client");
+		}
+		if ((_ipAddr != null && _port == null) || (_ipAddr == null && _port != null)) {
 			throw new ValueException("Either ipAddr and port must be specified," + " or neither must be specified.");
 		} else if (_server && (_ipAddr == null || _port == null)) {
 			throw new ValueException("-s may only be specified with -i and -p");

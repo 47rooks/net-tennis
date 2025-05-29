@@ -44,14 +44,17 @@ class PeerInputs {
 
 class TennisState extends FlxState {
 	var _ball:Ball;
+
 	var _leftPaddle:Paddle;
 	var _rightPaddle:Paddle;
 	var _net:FlxSprite;
 	var _leftScore:FlxText;
 	var _rightScore:FlxText;
 
-	final LEFT_X = 10;
-	final RIGHT_X = FlxG.width - 20;
+	public static final LEFT_X = 10;
+
+	public final RIGHT_X = FlxG.width - 20;
+
 	final PADDLE_SPEED = 100;
 
 	var _leftPoints = 0;
@@ -72,6 +75,10 @@ class TennisState extends FlxState {
 	var _myInputs:Null<PeerInputs> = null;
 	var _peerInputs:List<PeerInputs> = null;
 
+	// AI Player
+	var _simulatedPlayer:SimulatedPlayer;
+	var _aiPlayer:Bool;
+
 	// Game state vars
 	var _player:Null<Int>;
 	var _playerToServe:Null<Int>;
@@ -87,10 +94,12 @@ class TennisState extends FlxState {
 
 	var _messagingState:Null<Int> = null;
 
-	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server = false) {
+	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server = false, ?aiPlayer = false) {
 		_ipAddr = ipAddr;
 		_port = port;
 		_server = server;
+		_aiPlayer = aiPlayer;
+
 		if (_ipAddr != null) {
 			_listenerHost = new Host(StringTools.trim(_ipAddr));
 		}
@@ -127,6 +136,7 @@ class TennisState extends FlxState {
 		_rightPaddle.immovable = true;
 
 		_net = new FlxSprite();
+
 		_net.loadGraphic('assets/images/Net.png');
 		_net.screenCenter();
 		_net.y = 0;
@@ -219,6 +229,10 @@ class TennisState extends FlxState {
 		_playerToServe = GameState.PLAYER_ONE;
 		_currentFrame = 0;
 
+		// If required set up AI player
+		if (!_server && _aiPlayer && _client != null) {
+			_simulatedPlayer = new SimulatedPlayer(_ball, _rightPaddle);
+		}
 		// Mark game as fully initialized.
 		// No actual game play should be permitted until this point
 		_initialized = true;
@@ -250,6 +264,9 @@ class TennisState extends FlxState {
 		_ball.x = x;
 		_ball.y = y;
 		_ball.velocity.setPolarDegrees(speed, degrees);
+		if (_aiPlayer) {
+			_simulatedPlayer.opponentPlayed();
+		}
 	}
 
 	function resetForNewServe():Void {
@@ -260,6 +277,13 @@ class TennisState extends FlxState {
 		_ball.x = (FlxG.width - _ball.width) / 2.0;
 		_ball.y = 0;
 		_ball.velocity.set(0.0, 0.0);
+
+		if (_aiPlayer) {
+			_simulatedPlayer.rallyOver();
+			if (_playerToServe == GameState.PLAYER_TWO) {
+				_simulatedPlayer.myServe = true;
+			}
+		}
 	}
 
 	override public function update(elapsed:Float):Void {
@@ -283,7 +307,11 @@ class TennisState extends FlxState {
 			// Because a peer will appear at any point we have to ensure
 			// that we do not execute, say 'receiveMessage()' if we have not
 			// also called 'sendInputToPeer()'.
-			getInput();
+			if (_aiPlayer) {
+				getAIInput();
+			} else {
+				getInput();
+			}
 
 			sendInputToPeer();
 
@@ -300,14 +328,18 @@ class TennisState extends FlxState {
 		}
 
 		super.update(elapsed);
-
+		// trace('rightPaddle=${_rightPaddle.x}, ${_rightPaddle.y}');
 		// if (_currentFrame != _peerCurrentFrame) {
 		// 	trace('DESYNC: ${_currentFrame} : ${_peerCurrentFrame}');
 		// }
 
 		processInputs(elapsed, peerInputs);
 
-		FlxG.collide(_ball, _leftPaddle);
+		FlxG.collide(_ball, _leftPaddle, (_, _) -> {
+			if (_aiPlayer) {
+				_simulatedPlayer.opponentPlayed();
+			}
+		});
 		FlxG.collide(_ball, _rightPaddle);
 
 		if (_ball.y < 0) {
@@ -339,7 +371,7 @@ class TennisState extends FlxState {
 	}
 
 	function sendInputToPeer():Void {
-		trace('_lastFrameSent=${_lastFrameSent}, _currentFrame=${_currentFrame}');
+		// trace('_lastFrameSent=${_lastFrameSent}, _currentFrame=${_currentFrame}');
 		if (_lastFrameSent == null || _lastFrameSent < _currentFrame) {
 			var data = new BytesBuffer();
 			data.addInt32(_currentFrame);
@@ -349,12 +381,12 @@ class TennisState extends FlxState {
 
 			if (_server) {
 				if (_peer != null) {
-					trace('Sending frame ${_currentFrame}');
+					// trace('Sending frame ${_currentFrame}');
 					_peer.send(data.getBytes());
 				}
 			} else {
 				if (_client != null) {
-					trace('Sending frame ${_currentFrame}');
+					// trace('Sending frame ${_currentFrame}');
 					_client.send(data.getBytes());
 				}
 			}
@@ -375,7 +407,7 @@ class TennisState extends FlxState {
 	 */
 	function receiveMessage():Void {
 		var b:Bytes = null;
-		var loopCnt = 3;
+		var loopCnt = 5;
 		while (b == null && loopCnt > 0) {
 			if (_server) {
 				if (_peer != null) {
@@ -394,13 +426,22 @@ class TennisState extends FlxState {
 				inp.down = data[1] == 1 ? true : false;
 				inp.serve = data[2] == 1 ? true : false;
 
-				trace('Received peer frame = ${inp.framenumber}');
+				// trace('Received peer frame = ${inp.framenumber}');
 				_peerInputs.add(inp);
 				break; // should only get one packet in lockstep
 			}
 			Sys.sleep(0.005);
 			loopCnt--;
 		}
+	}
+
+	function getAIInput() {
+		var inp = _simulatedPlayer.getInput();
+		if (inp == null) {
+			inp = new PeerInputs();
+		}
+		inp.framenumber = _currentFrame;
+		_myInputs = inp;
 	}
 
 	function getInput() {
@@ -413,7 +454,7 @@ class TennisState extends FlxState {
 		if (FlxG.keys.pressed.S) {
 			inp.down = true;
 		}
-		if (FlxG.keys.pressed.T && _playerToServe == _player) {
+		if (FlxG.keys.justReleased.T && _playerToServe == _player) {
 			inp.serve = true;
 		}
 		// Dual player on one keyboard - comment for now
@@ -466,7 +507,7 @@ class TennisState extends FlxState {
 		// 	rightPaddleMove(0, 200 * elapsed);
 		// }
 		if (_myInputs.serve || peerInputs.serve) {
-			serve((FlxG.width) / 2.0, 0, 200, 135);
+			serve((FlxG.width) / 2.0, 0, 200, -30);
 		}
 	}
 }

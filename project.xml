@@ -46,6 +46,7 @@
 	<haxelib name="crashdumper" />
 	<haxelib name="utest" />
 	<haxelib name="hxcpp-debug-server" />
+	<haxelib name="bitdecaybtree" />
 
 	<!-- In case you want to use the addons package-->
 	<!--<haxelib
