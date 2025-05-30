@@ -1,11 +1,31 @@
 # Devlog
 
 - [Devlog](#devlog)
+  - [5/29/2025 A simulated player for testing](#5292025-a-simulated-player-for-testing)
+    - [Behaviour Trees](#behaviour-trees)
+    - [BT references](#bt-references)
   - [5/16/2025 Getting to lockstep](#5162025-getting-to-lockstep)
     - [Getting connected](#getting-connected)
     - [Getting my inputs, sending my inputs, getting their inputs](#getting-my-inputs-sending-my-inputs-getting-their-inputs)
     - [Run the `update()` loop or not](#run-the-update-loop-or-not)
     - [Waiting for packets in a fixed timestep game loop](#waiting-for-packets-in-a-fixed-timestep-game-loop)
+
+
+## 5/29/2025 A simulated player for testing
+
+After getting basic lockstep working it was necessary to be able to play the game for some time with only me playing. This required an automated opponent. 
+
+### Behaviour Trees
+
+So I needed a form or state machine or AI to control the player. MondayHopscotch has been playing with Behaviour Trees (https://github.com/bitDecayGames/BehaviorTree) and I was interested to try them out. So using their package I got a BT player running that can recieve the ball, hit it back, and serve if it wins. As yet it cannot lose, but I'll fix that soon. `playerBT.drawio` or `playerBT.png` show the current BT.
+
+BTs have the very interesting property of being evaluated in their entirety each tick. This permits reacting to changes in game state immediately. But it has significant implications for how you model the condition checks. It also implies that you must not make any single operation too expensive.
+
+I had originally begun setting state variables in the BT context to short circuit bits of logic once it had progressed to a certain point through the tree, like when it had arrived at the intercept point. But in fact simply comparing the current position with the intercept point is enough, and only a little more expensive.
+
+### BT references
+
+https://www.gamedeveloper.com/programming/behavior-trees-for-ai-how-they-work
 
 
 ## 5/16/2025 Getting to lockstep
