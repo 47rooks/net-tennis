@@ -3,6 +3,7 @@
 - [Devlog](#devlog)
   - [5/29/2025 A simulated player for testing](#5292025-a-simulated-player-for-testing)
     - [Behaviour Trees](#behaviour-trees)
+    - [Computing the intercept point for the incoming ball](#computing-the-intercept-point-for-the-incoming-ball)
     - [BT references](#bt-references)
   - [5/16/2025 Getting to lockstep](#5162025-getting-to-lockstep)
     - [Getting connected](#getting-connected)
@@ -22,6 +23,30 @@ So I needed a form or state machine or AI to control the player. MondayHopscotch
 BTs have the very interesting property of being evaluated in their entirety each tick. This permits reacting to changes in game state immediately. But it has significant implications for how you model the condition checks. It also implies that you must not make any single operation too expensive.
 
 I had originally begun setting state variables in the BT context to short circuit bits of logic once it had progressed to a certain point through the tree, like when it had arrived at the intercept point. But in fact simply comparing the current position with the intercept point is enough, and only a little more expensive.
+
+### Computing the intercept point for the incoming ball
+
+BT node EstimateIntercept <https://github.com/47rooks/net-tennis/blob/main/source/ai/bt/EstimateIntercept.hx> computes the intercept point by taking the incoming ball velocity and rendering it into parameteric form. 
+
+```
+    x = Px + Vx * t
+    y = Py + Vy * t
+```
+where (Px, Py) is the current position of the ball, just after the opponent hits it, (Vx, Vy) is the velocity vector (not normalized) and t is the parameter. As we know the surrounding box x and y values we can compute t using one equation and then plug that value into the other to determine the unknown either x or y.
+
+For example, to check if the ball has hit my paddle I know that x must be the x coordinate of whichever paddle the player is controlling. We can compute t as
+
+```
+   t = (paddle.x - Px) / Vx
+```
+
+Once we have that y is computed directly by substitution. Then if y is less than zero or greater than FlxG.height we know that it didn't hit the back wall before bouncing off either the top or bottom wall. In that case we compute the collision point with the wall by using the y equation to solve for t. Then we use that to solve for x by substititution into the x equation. This tells us where along the wall the collision is.
+
+At this point we know the ball must bounce and continue toward the player. So we compute the new velocity vector using `FlxPoint.bounce()`. Then taking the collision point as (Px, Py) we iterate and try again. We stop once we hit the receiving paddle x position.
+
+Apart from that there is a check too many iterations to prevent infinite loops. There are edge cases not explicitly handled yet, like what happens if the ball is bouncing directly up and down. Currently this should never happen - famous last words.
+
+But it's a start and for testing the simulated player has already revealed there are cases with the game instances can desync. I suspect this is simulation differences in the instances, rather than network desync, but I'll have to investigate.
 
 ### BT references
 
