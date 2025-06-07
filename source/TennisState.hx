@@ -1,5 +1,6 @@
 package;
 
+import utils.Globals;
 import haxe.ds.List;
 import haxe.Timer;
 import haxe.io.Bytes;
@@ -287,6 +288,8 @@ class TennisState extends FlxState {
 	}
 
 	override public function update(elapsed:Float):Void {
+		var frameStart = Timer.stamp();
+
 		// FIXME Checking for joins and start - this just feels like it's
 		//       in the wrong place.
 		if (_server && _listener == null) {
@@ -324,6 +327,7 @@ class TennisState extends FlxState {
 			// trace('peerInputs=${peerInputs}, _currentFrame=${_currentFrame}, peerInputs.framenumber=${peerInputs != null ? peerInputs.framenumber : -1}');
 			// No further update processing until the game is fully initialized.
 			// Don't proceed if the frame numbers are out of sync
+			Globals.metrics.partialFrameCount++;
 			return;
 		}
 
@@ -368,6 +372,9 @@ class TennisState extends FlxState {
 		}
 
 		_currentFrame++;
+		// update metrics
+		Globals.metrics.frameTimes.push(Timer.stamp() - frameStart);
+		Globals.metrics.frameCount++;
 	}
 
 	function sendInputToPeer():Void {

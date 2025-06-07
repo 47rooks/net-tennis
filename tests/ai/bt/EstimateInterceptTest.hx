@@ -27,10 +27,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(180.0, loc.y);
+		Assert.floatEquals(160.0, loc.y);
 	}
 
 	function testSlightDownVel() {
@@ -48,10 +48,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(210.0, loc.y);
+		Assert.floatEquals(190.0, loc.y);
 	}
 
 	function testSlightUpVel() {
@@ -69,10 +69,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(108.0, loc.y);
+		Assert.floatEquals(88.0, loc.y);
 	}
 
 	function testTopBounce1() {
@@ -90,10 +90,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(180.0, loc.y);
+		Assert.floatEquals(160.0, loc.y);
 	}
 
 	function testTopBounce2() {
@@ -111,10 +111,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(0.0, loc.y);
+		Assert.floatEquals(-20.0, loc.y);
 	}
 
 	function testBottomBounce1() {
@@ -132,10 +132,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(180.0, loc.y);
+		Assert.floatEquals(160.0, loc.y);
 	}
 
 	function testBottomBounce2() {
@@ -153,10 +153,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
 		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(180.0, loc.y);
+		Assert.floatEquals(160.0, loc.y);
 	}
 
 	function testServe() {
@@ -174,9 +174,10 @@ class EstimateInterceptTest extends Test {
 		node.process(0.016);
 
 		// Verification
-		var loc:FlxPoint = _btCtx.get("targetLocation");
+		var loc:FlxPoint = _btCtx.get("interceptPoint");
 		Assert.notNull(_btCtx);
-		Assert.floatEquals(620, loc.x);
-		Assert.floatEquals(180.0, loc.y);
+		Assert.isNull(loc);
+
+		Assert.fail("add proper serve validation");
 	}
 }
