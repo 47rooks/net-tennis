@@ -1,6 +1,7 @@
 # Devlog
 
 - [Devlog](#devlog)
+  - [6/8/2025 Refactor to allow single instance play](#682025-refactor-to-allow-single-instance-play)
   - [5/29/2025 A simulated player for testing](#5292025-a-simulated-player-for-testing)
     - [Behaviour Trees](#behaviour-trees)
     - [Computing the intercept point for the incoming ball](#computing-the-intercept-point-for-the-incoming-ball)
@@ -11,6 +12,60 @@
     - [Run the `update()` loop or not](#run-the-update-loop-or-not)
     - [Waiting for packets in a fixed timestep game loop](#waiting-for-packets-in-a-fixed-timestep-game-loop)
 
+
+## 6/8/2025 Refactor to allow single instance play
+
+Having gotten a basic AI opponent work it was time to look at performance metrics and start checking on frametimings, number of skipped frames due to packet misses and so on. But the problem here is that I need a way to display the metrics. My thought here was an overlay like the F3 page in Minecraft. This means I need a UI which will be HaxeUI but I didn't want to have to keep loading two instances of the game to test the UI. So I needed to get the game to play in non-networked mode. And that's what this post is about.
+
+A number of assumptions had been made at to this point which meant that a bit of refactoring was in order. In particular only the client - second instance - supported an AI player. Further the passing of input keystrokes was pretty messy. So a little thinking about what to support was needed first.
+
+This often happens with code that the wrong things are tied together unnecessarily and you need to pry them apart to make progress without creating a tangled mess. I had various problems.
+
+  * the game simulation logic explicitly looked for network input for a particular paddle and I had to check in the movement code which input moved which paddle. This meant that code that could be generic was hardcoded to a paddle.
+  * only one player could be an AI, the one that was playing in the second (client) instance
+  * there was no easier to just say player 1 will be AI or both players will be AI
+  * there was no way to run without the network. The main game loop assumed the player was networked and simply would not proceed without network packet input from the other instance
+  * there was no way to have a game mode where two players played as different players on the same physical machine. This wasn't really a target use case originally but it seemed odd that it just couldn't be supported.
+
+So after thinking about it I had the following elements that needed to be separated:
+
+    instances of the game
+    players - one or two
+    paddles - left or right
+    the player input - keyboard, AI, or network messages
+
+The main game logic really only requires the notion of two players, each controlling a single paddle. So the goal seemed to be to create the main game logic around that notion and then to provide a way to produce inputs for each player each frame and pass them in as inputs for player 1 and player 2. Further it seemed sensible to make it possible that the players control different paddles, so they could play at different ends of the court. So it was necessary to be able to map players to paddles, and to map input sources to players, and then to allow this for one or two game instances.
+
+The mapping looks like this:
+
+```
+        AI --------------
+                         \
+        network packet -----> player ----> paddle 
+                         /
+        keyboard --------
+```
+
+This structure allows a player to be a user or an AI and for the networked case to represent the remote user as a `NetworkPlayer`. The `NetworkPlayer` simply reads a message from the network connection between the two games and gets the inputs from the remote player. It doesn't matter if that remote player is a person or an AI. It also lays the groundwork to have multiple local players, though additional work is required there so they have separate input sources - different keys or separate controllers.
+
+Now it is simple to just make sure that the `update()` function only goes on to run the game logic if there is a set of inputs from each player. If there isn't it simply aborts this update and tries on the next iteration. The use for this is where network packets are delayed for some reason. If the non-networked case this just doesn't happen.
+
+So there are now three `*Player` classes.
+
+
+| Class             | Description                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| `Player`          | The base class and the type that represents a person.                                                  |
+| `SimulatedPlayer` | The AI player which generates its inputs from a Behaviour Tree AI.                                     |
+| `NetworkPlayer`   | The representation of the remote player in network game mode which gets its input from a network read. |
+
+These have to be configured at game startup. This meant updates to the command line arguments to separate the AI-ness of a player from the instance of the game and attach it to the player itself.
+
+As happens with refactoring you hit other issues. While doing this it becamse increasingly obvious that the networking setup really was appropriate in the state but was more a property of the Game object. Flixel doesn't really expect a `FlxGame` subclass to be created, though you could do that. I opted to bloat `Main` for now and add `Globals`. I will likely have to revisit this and may well create a game level object. This would require making it possible for the state and player objects and so on to get access to game level fields. For now `Globals` is easier, as `FlxG.game` is not generic.
+
+Additional items like moving code from `TennisState` to player classes and so on cropped up on the way.
+
+Now we can play player vs AI on a single instance which was the main goal. This will make it simpler to test enhancments that do not require networked testing.
 
 ## 5/29/2025 A simulated player for testing
 

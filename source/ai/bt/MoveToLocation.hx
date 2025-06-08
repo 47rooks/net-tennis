@@ -1,7 +1,7 @@
 package ai.bt;
 
 import bitdecay.behavior.tree.leaf.LeafNode;
-import TennisState.PeerInputs;
+import player.PlayerInputs;
 import bitdecay.behavior.tree.NodeStatus;
 import flixel.math.FlxPoint;
 
@@ -22,10 +22,10 @@ abstract class MoveToLocation extends LeafNode {
 		var t = Std.int(targetLocation.y);
 		var p = Std.int(pos.y);
 		if (t == p) {
-			ctx.set("myInputs", new PeerInputs());
+			ctx.set("myInputs", new PlayerInputs());
 			return SUCCESS;
 		}
-		var inp = new PeerInputs();
+		var inp = new PlayerInputs();
 		if (t > p) {
 			inp.down = true;
 		} else if (t < p) {

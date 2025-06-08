@@ -1,5 +1,9 @@
 package;
 
+import player.PlayerInputs;
+import player.SimulatedPlayer;
+import player.Player;
+import utils.GameState;
 import utils.Globals;
 import haxe.ds.List;
 import haxe.Timer;
@@ -18,33 +22,8 @@ import flixel.math.FlxPoint;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
 
-class GameState {
-	public static final PLAYER_TWO = 2;
-	public static final PLAYER_ONE = 1;
-
-	public var playerToServe:Null<Int>;
-
-	public function new() {
-		playerToServe = null;
-	}
-}
-
-class PeerInputs {
-	public var framenumber:Int;
-	public var up:Bool;
-	public var down:Bool;
-	public var serve:Bool;
-
-	public function new() {
-		framenumber = -2;
-		up = false;
-		down = false;
-		serve = false;
-	}
-}
-
 class TennisState extends FlxState {
-	var _ball:Ball;
+	public var _ball:Ball;
 
 	var _leftPaddle:Paddle;
 	var _rightPaddle:Paddle;
@@ -68,24 +47,18 @@ class TennisState extends FlxState {
 	var _listener:Null<Listener> = null;
 	var _listenerError:NetworkException;
 	var _listenerErrorMutex:Mutex;
-	var _peer:Null<Server> = null; // remote peer - actually a client - gotta sort names
 
-	var _client:Null<Client> = null;
 	var _clientNewCount = 0;
 
-	var _myInputs:Null<PeerInputs> = null;
-	var _peerInputs:List<PeerInputs> = null;
+	var _player1:Player;
+	var _player2:Player;
 
-	// AI Player
-	var _simulatedPlayer:SimulatedPlayer;
-	var _aiPlayer:Bool;
+	var _playerInputs:Null<Array<PlayerInputs>> = null;
 
 	// Game state vars
 	var _player:Null<Int>;
 	var _playerToServe:Null<Int>;
 	var _initialized:Bool = false;
-	var _currentFrame:Null<Int> = null;
-	var _peerCurrentFrame:Null<Int> = null; // FIXME maybe remove
 	var _lastFrameSent:Null<Int> = null;
 
 	final NEW = 1;
@@ -95,11 +68,12 @@ class TennisState extends FlxState {
 
 	var _messagingState:Null<Int> = null;
 
-	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server = false, ?aiPlayer = false) {
+	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server = false, player1:Player, player2:Player) {
 		_ipAddr = ipAddr;
 		_port = port;
 		_server = server;
-		_aiPlayer = aiPlayer;
+		_player1 = player1;
+		_player2 = player2;
 
 		if (_ipAddr != null) {
 			_listenerHost = new Host(StringTools.trim(_ipAddr));
@@ -116,7 +90,7 @@ class TennisState extends FlxState {
 
 		FlxG.autoPause = false;
 
-		_peerInputs = new List();
+		_playerInputs = new Array<PlayerInputs>();
 	}
 
 	override public function create() {
@@ -135,6 +109,19 @@ class TennisState extends FlxState {
 		_rightPaddle = new Paddle(RIGHT_X, FlxG.height / 2.0 - 20);
 		_rightPaddle.makeGraphic(10, 40, FlxColor.WHITE);
 		_rightPaddle.immovable = true;
+
+		// Assign paddles to players
+		_player1.paddle = _leftPaddle;
+		_player2.paddle = _rightPaddle;
+		// FIXME This is a hack to get the ball into the AI player.
+		//       The ball should go via a context push.
+		if (_player1.type == AI) {
+			cast(_player1, SimulatedPlayer)._ball = _ball;
+		}
+		if (_player2.type == AI) {
+			cast(_player2, SimulatedPlayer)._ball = _ball;
+		}
+		// -----
 
 		_net = new FlxSprite();
 
@@ -158,20 +145,21 @@ class TennisState extends FlxState {
 		add(_rightScore);
 	}
 
-	function startServer():Void {
+	function startListener():Void {
 		if (_server && _listenerHost != null && _port != null) {
 			_listener = new Listener(_listenerHost, _port, newClientHandler, listenerErrorHandler);
 		}
 	}
 
 	function startClient():Void {
-		if (!_server && _client == null && _listenerHost != null && _port != null) {
+		if (!_server && G.gameState.connection == null && _listenerHost != null && _port != null) {
 			trace('trying to connect');
 			// Create a network object
 			try {
-				_client = new Client();
+				var client = new Client();
 				_clientNewCount++;
-				_client.connect(_listenerHost, _port);
+				client.connect(_listenerHost, _port);
+				G.gameState.connection = client;
 				trace('connected');
 
 				initializeGameState();
@@ -191,17 +179,17 @@ class TennisState extends FlxState {
 		switch (ne.error) {
 			case EOF:
 				// Server went away - throw away Client object
-				_client.close();
-				_client = null;
+				G.gameState.connection.close();
+				G.gameState.connection = null;
 			case INVALID_SOCKET_HANDLE:
 				trace('socket no good. ${_clientNewCount}');
-				_client.close();
-				_client = null;
+				G.gameState.connection.close();
+				G.gameState.connection = null;
 			default:
 				// FIXME Client recovery
 				trace('Got exception: ${ne.error}');
-				_client.close();
-				_client = null;
+				G.gameState.connection.close();
+				G.gameState.connection = null;
 		}
 	}
 
@@ -212,11 +200,12 @@ class TennisState extends FlxState {
 	 * by the main thread.
 	**/
 	public function newClientHandler(client:Server) {
-		if (_peer != null) {
+		if (G.gameState.connection != null) {
+			// Already connected - reject the new connection
 			client.close();
 			return;
 		}
-		_peer = client;
+		G.gameState.connection = client;
 		trace('${Timer.stamp()}:client connected');
 
 		// FIXME - this needs to be handled in the server thread at the
@@ -228,14 +217,9 @@ class TennisState extends FlxState {
 
 	function initializeGameState():Void {
 		_playerToServe = GameState.PLAYER_ONE;
-		_currentFrame = 0;
+		_player1.myServe = true;
+		G.gameState.currentFrame = 0;
 
-		// If required set up AI player
-		if (!_server && _aiPlayer && _client != null) {
-			_simulatedPlayer = new SimulatedPlayer(_ball, _rightPaddle);
-		}
-		// Mark game as fully initialized.
-		// No actual game play should be permitted until this point
 		_initialized = true;
 	}
 
@@ -265,8 +249,13 @@ class TennisState extends FlxState {
 		_ball.x = x;
 		_ball.y = y;
 		_ball.velocity.setPolarDegrees(speed, degrees);
-		if (_aiPlayer) {
-			_simulatedPlayer.opponentPlayed();
+
+		// FIXME this should be simplified but will be correct for now.
+		if (_playerToServe == GameState.PLAYER_ONE) {
+			_player2.opponentPlayed();
+		}
+		if (_playerToServe == GameState.PLAYER_TWO) {
+			_player1.opponentPlayed();
 		}
 	}
 
@@ -279,11 +268,12 @@ class TennisState extends FlxState {
 		_ball.y = 0;
 		_ball.velocity.set(0.0, 0.0);
 
-		if (_aiPlayer) {
-			_simulatedPlayer.rallyOver();
-			if (_playerToServe == GameState.PLAYER_TWO) {
-				_simulatedPlayer.myServe = true;
-			}
+		_player1.rallyOver();
+		_player2.rallyOver();
+		if (_playerToServe == GameState.PLAYER_ONE) {
+			_player1.myServe = true;
+		} else {
+			_player2.myServe = true;
 		}
 	}
 
@@ -292,39 +282,32 @@ class TennisState extends FlxState {
 
 		// FIXME Checking for joins and start - this just feels like it's
 		//       in the wrong place.
-		if (_server && _listener == null) {
-			startServer();
-		}
+		if (G.gameState.gameMode == NETWORK) {
+			if (_server && _listener == null) {
+				startListener();
+			}
 
-		if (!_server && _client == null) {
-			trace('starting client ');
-			startClient();
-		}
+			if (!_server && G.gameState.connection == null) {
+				trace('starting client ');
+				startClient();
+			}
 
-		if (_server && _peer != null && !_initialized) {
+			if (_server && G.gameState.connection != null && !_initialized) {
+				initializeGameState();
+			}
+		} else {
 			initializeGameState();
 		}
 
-		if ((_server && _peer != null) || (!_server && _client != null)) {
-			// Either process all or none of these steps.
-			// Because a peer will appear at any point we have to ensure
-			// that we do not execute, say 'receiveMessage()' if we have not
-			// also called 'sendInputToPeer()'.
-			if (_aiPlayer) {
-				getAIInput();
-			} else {
-				getInput();
-			}
+		getInputs();
 
-			sendInputToPeer();
-
-			receiveMessage();
-		}
-
-		var peerInputs = _peerInputs.pop();
-
-		if (!_initialized || peerInputs == null || _currentFrame > peerInputs.framenumber) {
-			// trace('peerInputs=${peerInputs}, _currentFrame=${_currentFrame}, peerInputs.framenumber=${peerInputs != null ? peerInputs.framenumber : -1}');
+		if (!_initialized
+			|| _playerInputs == null
+			|| _playerInputs[GameState.PLAYER_ONE] == null
+			|| _playerInputs[GameState.PLAYER_TWO] == null
+			|| G.gameState.currentFrame > _playerInputs[GameState.PLAYER_ONE].framenumber
+			|| G.gameState.currentFrame > _playerInputs[GameState.PLAYER_TWO].framenumber) {
+			// trace('peerInputs=${peerInputs}, G.gameState.currentFrame=${G.gameState.currentFrame}, peerInputs.framenumber=${peerInputs != null ? peerInputs.framenumber : -1}');
 			// No further update processing until the game is fully initialized.
 			// Don't proceed if the frame numbers are out of sync
 			Globals.metrics.partialFrameCount++;
@@ -333,18 +316,15 @@ class TennisState extends FlxState {
 
 		super.update(elapsed);
 		// trace('rightPaddle=${_rightPaddle.x}, ${_rightPaddle.y}');
-		// if (_currentFrame != _peerCurrentFrame) {
-		// 	trace('DESYNC: ${_currentFrame} : ${_peerCurrentFrame}');
-		// }
 
-		processInputs(elapsed, peerInputs);
+		processInputs(elapsed, _playerInputs);
 
 		FlxG.collide(_ball, _leftPaddle, (_, _) -> {
-			if (_aiPlayer) {
-				_simulatedPlayer.opponentPlayed();
-			}
+			notifyPlayer(_leftPaddle);
 		});
-		FlxG.collide(_ball, _rightPaddle);
+		FlxG.collide(_ball, _rightPaddle, (_, _) -> {
+			notifyPlayer(_rightPaddle);
+		});
 
 		if (_ball.y < 0) {
 			_ball.velocity.bounce(FlxPoint.get(0, 1));
@@ -371,98 +351,50 @@ class TennisState extends FlxState {
 			resetForNewServe();
 		}
 
-		_currentFrame++;
+		G.gameState.currentFrame++;
 		// update metrics
 		Globals.metrics.frameTimes.push(Timer.stamp() - frameStart);
 		Globals.metrics.frameCount++;
 	}
 
-	function sendInputToPeer():Void {
-		// trace('_lastFrameSent=${_lastFrameSent}, _currentFrame=${_currentFrame}');
-		if (_lastFrameSent == null || _lastFrameSent < _currentFrame) {
-			var data = new BytesBuffer();
-			data.addInt32(_currentFrame);
-			data.addByte(_myInputs.up ? 1 : 0);
-			data.addByte(_myInputs.down ? 1 : 0);
-			data.addByte(_myInputs.serve ? 1 : 0);
-
-			if (_server) {
-				if (_peer != null) {
-					// trace('Sending frame ${_currentFrame}');
-					_peer.send(data.getBytes());
-				}
-			} else {
-				if (_client != null) {
-					// trace('Sending frame ${_currentFrame}');
-					_client.send(data.getBytes());
-				}
-			}
-			_lastFrameSent = _currentFrame;
-		}
-	}
-
 	/**
-	 * Receive a message from the peer.
+	 * Find the owner of the paddle that just hit the ball and notify the
+	 * other player.
 	 * 
-	 * Message passing drives the game messaging state machine.
-	 * 
-	 * Certain message types may only be sent or received in a particular state.
-	 * Both peers must be in the consistent states.
-	 * 
-	 * The received message must be queued for later processing or digested
-	 * immediately here.
+	 * FIXME - this could be done better if the paddle/player mapping stuff
+	 *         got better sorted. But this will at least be correct for now.
+	 * @param paddle 
 	 */
-	function receiveMessage():Void {
-		var b:Bytes = null;
-		var loopCnt = 5;
-		while (b == null && loopCnt > 0) {
-			if (_server) {
-				if (_peer != null) {
-					b = _peer.receive();
-				}
-			} else {
-				if (_client != null) {
-					b = _client.receive();
-				}
-			}
-			if (b != null) {
-				var inp = new PeerInputs();
-				var data = b.getData().slice(4);
-				inp.framenumber = b.getInt32(0);
-				inp.up = data[0] == 1 ? true : false;
-				inp.down = data[1] == 1 ? true : false;
-				inp.serve = data[2] == 1 ? true : false;
-
-				// trace('Received peer frame = ${inp.framenumber}');
-				_peerInputs.add(inp);
-				break; // should only get one packet in lockstep
-			}
-			Sys.sleep(0.005);
-			loopCnt--;
+	function notifyPlayer(paddle:Paddle):Void {
+		if (_player1.paddle == paddle) {
+			_player2.opponentPlayed();
+		}
+		if (_player2.paddle == paddle) {
+			_player1.opponentPlayed();
 		}
 	}
 
-	function getAIInput() {
-		var inp = _simulatedPlayer.getInput();
-		if (inp == null) {
-			inp = new PeerInputs();
+	function getInputs():Void {
+		for (player in [_player1, _player2]) {
+			_playerInputs[player.id] = player.getInput();
 		}
-		inp.framenumber = _currentFrame;
-		_myInputs = inp;
 	}
 
-	function getInput() {
-		var inp = new PeerInputs();
-		inp.framenumber = _currentFrame;
-		// Keyboard input
-		if (FlxG.keys.pressed.W) {
-			inp.up = true;
+	function processInputs(elapsed:Float, inps:Array<PlayerInputs>):Void {
+		// FIXME this still hardcodes the player paddle mapping
+		// Process left hand player - server player
+		if (inps[GameState.PLAYER_ONE].up) {
+			leftPaddleMove(0, -200 * elapsed);
 		}
-		if (FlxG.keys.pressed.S) {
-			inp.down = true;
+		if (inps[GameState.PLAYER_ONE].down) {
+			leftPaddleMove(0, 200 * elapsed);
 		}
-		if (FlxG.keys.justReleased.T && _playerToServe == _player) {
-			inp.serve = true;
+		// Process right hand player - client player
+		if (inps[GameState.PLAYER_TWO].up) {
+			rightPaddleMove(0, -200 * elapsed);
+		}
+		if (inps[GameState.PLAYER_TWO].down) {
+			rightPaddleMove(0, 200 * elapsed);
 		}
 		// Dual player on one keyboard - comment for now
 		// if (FlxG.keys.pressed.O) {
@@ -471,49 +403,7 @@ class TennisState extends FlxState {
 		// if (FlxG.keys.pressed.K) {
 		// 	rightPaddleMove(0, 200 * elapsed);
 		// }
-		_myInputs = inp;
-	}
-
-	function processInputs(elapsed:Float, peerInputs:PeerInputs):Void {
-		if (_server) {
-			// Process left hand player - server player
-			if (_myInputs.up) {
-				leftPaddleMove(0, -200 * elapsed);
-			}
-			if (_myInputs.down) {
-				leftPaddleMove(0, 200 * elapsed);
-			}
-			// Process right hand player - client player
-			if (peerInputs.up) {
-				rightPaddleMove(0, -200 * elapsed);
-			}
-			if (peerInputs.down) {
-				rightPaddleMove(0, 200 * elapsed);
-			}
-		} else {
-			// Process left hand player - server player
-			if (peerInputs.up) {
-				leftPaddleMove(0, -200 * elapsed);
-			}
-			if (peerInputs.down) {
-				leftPaddleMove(0, 200 * elapsed);
-			}
-			// Process right hand player - client player
-			if (_myInputs.up) {
-				rightPaddleMove(0, -200 * elapsed);
-			}
-			if (_myInputs.down) {
-				rightPaddleMove(0, 200 * elapsed);
-			}
-		}
-		// Dual player on one keyboard - comment for now
-		// if (FlxG.keys.pressed.O) {
-		// 	rightPaddleMove(0, -200 * elapsed);
-		// }
-		// if (FlxG.keys.pressed.K) {
-		// 	rightPaddleMove(0, 200 * elapsed);
-		// }
-		if (_myInputs.serve || peerInputs.serve) {
+		if (inps[GameState.PLAYER_ONE].serve || inps[GameState.PLAYER_TWO].serve) {
 			serve((FlxG.width) / 2.0, 0, 200, -30);
 		}
 	}

@@ -7,5 +7,10 @@
 
 sleep 5
 
-# Start client
-./export/linux/bin/NetTennis -i 127.0.0.1 -p 5000 &
+# Start client with AI player
+./export/linux/bin/NetTennis -i 127.0.0.1 -p 5000 -a &
+
+
+./export/linux/bin/NetTennis -i 127.0.0.1 -p 5000 --p2 ai &
+
+

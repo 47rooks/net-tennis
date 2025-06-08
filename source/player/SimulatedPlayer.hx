@@ -1,8 +1,8 @@
-package;
+package player;
 
+import utils.Globals.G;
 import ai.bt.MoveToRestLocation;
 import ai.bt.MoveToInterceptLocation;
-import TennisState.PeerInputs;
 import flixel.math.FlxPoint;
 import flixel.FlxG;
 import ai.bt.EstimateIntercept;
@@ -21,19 +21,16 @@ import bitdecay.behavior.tree.composite.Fallback;
  * 
  * Currently only ever player 2.
  */
-class SimulatedPlayer {
-	var _ball:Ball;
-	var _paddle:Paddle;
+class SimulatedPlayer extends Player {
+	public var _ball:Ball; // FIXME should come through the context
+
 	var _btCtx:BTContext;
 	var _bt:Node;
 
-	public var myServe:Bool;
-
-	public function new(ball:Ball, paddle:Paddle) {
-		_ball = ball;
-		_paddle = paddle;
+	public function new(id:Int) {
+		super(id, AI);
 		myServe = false;
-		init();
+		// init(); FIXME - deferring initialization until first use
 	}
 
 	public function init():Void {
@@ -55,8 +52,8 @@ class SimulatedPlayer {
 		// Move to rest position
 		var isBallOutgoing = new StatusAction(BT.wrapFn(ballOutgoing));
 		var setRestPosition = new SetVariable("restPoint",
-            		CONST(FlxPoint.get(_paddle.x,
-            			               (FlxG.height - _paddle.height) / 2.0)));
+            		CONST(FlxPoint.get(paddle.x,
+            			               (FlxG.height - paddle.height) / 2.0)));
 									   var moveToInterceptLocation = new MoveToInterceptLocation();
 	    var moveToRestLocation = new MoveToRestLocation();
 
@@ -79,7 +76,7 @@ class SimulatedPlayer {
 			return myServe ? SUCCESS : FAIL;
 		}));
 		var serveBall = new StatusAction(BT.wrapFn((_, _) -> {
-			var inp = new PeerInputs();
+			var inp = new PlayerInputs();
 			inp.serve = true;
 			_btCtx.set("myInputs", inp);
 			return SUCCESS;
@@ -155,20 +152,29 @@ class SimulatedPlayer {
 		_btCtx.set("b2", FlxG.height);
 		_btCtx.set("ballVelocity", _ball.velocity);
 		_btCtx.set("ballPosition", _ball.getPosition());
-		_btCtx.set("paddleLocation", _paddle.getPosition());
+		_btCtx.set("paddleLocation", paddle.getPosition());
 	}
 
 	/**
 	 * Get the latest inputs from the AI player.
-	 * @return Null<PeerInputs>
+	 * @return Null<PlayerInputs>
 	 */
-	public function getInput():Null<PeerInputs> {
-		_btCtx.set("paddleLocation", _paddle.getPosition());
+	override public function getInput():Null<PlayerInputs> {
+		// trace('getting SimulatedPlayer.getInput (${id})');
+		if (_btCtx == null) {
+			init();
+		}
+		_btCtx.set("paddleLocation", paddle.getPosition());
 		_bt.process(0.016); // Intentionally ignore result
 		var inp = _btCtx.get("myInputs");
 		_btCtx.remove("myInputs");
 		if (inp == null) {
-			inp = new PeerInputs();
+			inp = new PlayerInputs();
+		}
+		inp.framenumber = G.gameState.currentFrame;
+		if (G.gameState.connection != null) {
+			trace('SimulatedPlayer send');
+			sendInputToPeer(inp);
 		}
 		return inp;
 	}
@@ -176,14 +182,14 @@ class SimulatedPlayer {
 	/**
 	 * Notify the AI player the rally is over.
 	 */
-	public function rallyOver():Void {
+	override public function rallyOver():Void {
 		setupCtx();
 	}
 
 	/**
 	 * Notify the AI player that the other player played the ball.
 	 */
-	public function opponentPlayed():Void {
+	override public function opponentPlayed():Void {
 		_btCtx.remove("interceptPoint");
 		setupCtx();
 	}
