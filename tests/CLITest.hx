@@ -85,28 +85,36 @@ class CLITest extends Test {
 		}, ValueException);
 	}
 
-	function testValidClientAIPlayer() {
-		_m.parseCliArgs(["-a"]);
+	function testValidClientAIPlayer1() {
+		_m.parseCliArgs(["--p1", "ai"]);
 
-		@:privateAccess Assert.isTrue(_m._aiPlayer);
-		@:privateAccess Assert.isFalse(_m._server);
+		@:privateAccess Assert.isTrue(_m._player1AI);
 	}
 
-	function testInvalidServerAIPlayer() {
-		Assert.raises(() -> {
-			try {
-				_m.parseCliArgs(["-s", "-a"]);
-			} catch (e:ValueException) {
-				Assert.equals("AI player only supported on client", e.value);
-				throw e;
-			}
-		}, ValueException);
+	function testValidClientAIPlayer2() {
+		_m.parseCliArgs(["--p2", "ai"]);
+
+		@:privateAccess Assert.isTrue(_m._player2AI);
+	}
+
+	function testIpPortServerAI() {
+		_m.parseCliArgs(["-i", "127.0.0.1", "-p", "5000", "-s", "--p1", "ai"]);
+		@:privateAccess Assert.equals(5000, _m._port);
+		@:privateAccess Assert.equals("127.0.0.1", _m._ipAddr);
+		@:privateAccess Assert.isTrue(_m._player1AI);
+	}
+
+	function testDoubleAI() {
+		_m.parseCliArgs(["--p1", "ai", "--p2", "ai"]);
+
+		@:privateAccess Assert.isTrue(_m._player1AI);
+		@:privateAccess Assert.isTrue(_m._player2AI);
 	}
 }
 
 class SubProcessCLITests extends Test {
 	function testHelp() {
 		var p = new Process("export/linux/bin/NetTennis", ["-h"]);
-		Assert.equals("NetTennis [-h] [-i IP address -p port [-s]]", p.stdout.readLine());
+		Assert.equals("NetTennis [-h] [-i IP address -p port [-s]] [--p1 ai][--p2 ai]", p.stdout.readLine());
 	}
 }

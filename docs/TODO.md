@@ -4,6 +4,10 @@
    * make game work without network - single instance
    * two modes of single instance play - with sim or two local players
      * two local players requires the ability to map each player to different inputs
+   * players
+     * allow either player to be on either server or client when networked
+       * requires a protocol negotiation to check for a clash
+       * may not be a good idea anyway
    * add gamepad support
    * reskin game and enlarge - basic dev art required
    * Sim player
