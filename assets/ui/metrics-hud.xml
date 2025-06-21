@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vbox id="metricsHUD">
+    <vbox width="100%">
+        <label id="HUDTitle" text="Metrics, Stats and Charts" />
+        <hbox width="100%">
+            <tableview id="intMetrics" selectionMode="disabled">
+                <header hidden="true">
+                    <column id="metric" text="Metric" width="200" />
+                    <column id="value" text="Value" />
+                </header>
+                <item-renderer>
+                    <label id="name" />
+                </item-renderer>
+                <item-renderer>
+                    <label id="value" horizontalAlign="right" />
+                </item-renderer>
+            </tableview>
+            <vbox className="spacer" width="50"></vbox>
+            <realtime-line-chart-comp id="frameTimes" width="200" height="75"
+                title="Frame time (ms)" fontSize="12">
+            </realtime-line-chart-comp>
+        </hbox>
+    </vbox>
+</vbox>

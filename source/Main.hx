@@ -1,7 +1,6 @@
 package;
 
-// import crashdumper.CrashDumper;
-// import crashdumper.SessionData;
+import haxe.ui.Toolkit;
 import player.NetworkPlayer;
 import player.SimulatedPlayer;
 import player.Player;
@@ -53,6 +52,9 @@ class Main extends Sprite {
 		} else {
 			G.gameState.gameMode = LOCAL;
 		}
+
+		// Initialize HaxeUI before creating the FlxGame
+		Toolkit.init();
 
 		addChild(new FlxGame(0, 0, () -> {
 			return new TennisState(_ipAddr, _port, _server, player1, player2);

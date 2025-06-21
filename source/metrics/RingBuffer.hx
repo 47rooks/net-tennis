@@ -1,5 +1,7 @@
 package metrics;
 
+import haxe.ValueException;
+
 /**
  * A RingBuffer implementation - refer to https://code.haxe.org/category/data-structures/ring-array.html.
  * Note, this is not intended to be used for classic producer/consumer but
@@ -70,9 +72,19 @@ class RingBuffer<T> {
 		return '[head: $head, tail: $tail, capacity: $cap]';
 	}
 
-	public inline function count()
+	public inline function count() {
 		return (head - tail) & cap;
+	}
 
-	public inline function space()
+	public inline function space() {
 		return (tail - head - 1) & cap;
+	}
+
+	public function getValue(idx:Int):T {
+		if (idx < 0 || idx > count()) {
+			throw new ValueException('index ${idx} out of bounds');
+		}
+		var vIdx = (head - idx - 1) & cap;
+		return a[vIdx];
+	}
 }

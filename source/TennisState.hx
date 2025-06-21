@@ -1,5 +1,8 @@
 package;
 
+import lime.system.System;
+import metrics.Metrics;
+import ui.MetricsHUD;
 import player.PlayerInputs;
 import player.SimulatedPlayer;
 import player.Player;
@@ -68,6 +71,8 @@ class TennisState extends FlxState {
 
 	var _messagingState:Null<Int> = null;
 
+	var _metricsHUD:Null<MetricsHUD> = null;
+
 	public function new(?ipAddr:Null<String>, ?port:Null<Int>, ?server = false, player1:Player, player2:Player) {
 		_ipAddr = ipAddr;
 		_port = port;
@@ -91,6 +96,8 @@ class TennisState extends FlxState {
 		FlxG.autoPause = false;
 
 		_playerInputs = new Array<PlayerInputs>();
+
+		bgColor = 0x4072c79c;
 	}
 
 	override public function create() {
@@ -278,7 +285,7 @@ class TennisState extends FlxState {
 	}
 
 	override public function update(elapsed:Float):Void {
-		var frameStart = Timer.stamp();
+		var frameStart = Sys.time() * 1000.0;
 
 		// FIXME Checking for joins and start - this just feels like it's
 		//       in the wrong place.
@@ -301,6 +308,21 @@ class TennisState extends FlxState {
 
 		getInputs();
 
+		// Check local inputs that don't affect game play such as settings
+		// metrics and such.
+		if (FlxG.keys.justReleased.F3) {
+			if (_metricsHUD != null) {
+				remove(_metricsHUD);
+				_metricsHUD.destroy();
+				_metricsHUD = null;
+			} else {
+				_metricsHUD = new MetricsHUD();
+				_metricsHUD.setPosition(20, 20);
+				_metricsHUD.setSize(FlxG.width - 40, FlxG.height - 40);
+				add(_metricsHUD);
+			}
+		}
+
 		if (!_initialized
 			|| _playerInputs == null
 			|| _playerInputs[GameState.PLAYER_ONE] == null
@@ -310,7 +332,7 @@ class TennisState extends FlxState {
 			// trace('peerInputs=${peerInputs}, G.gameState.currentFrame=${G.gameState.currentFrame}, peerInputs.framenumber=${peerInputs != null ? peerInputs.framenumber : -1}');
 			// No further update processing until the game is fully initialized.
 			// Don't proceed if the frame numbers are out of sync
-			Globals.metrics.partialFrameCount++;
+			Globals.metrics.INC(Metrics.PARTIAL_FRAME_COUNT);
 			return;
 		}
 
@@ -353,8 +375,8 @@ class TennisState extends FlxState {
 
 		G.gameState.currentFrame++;
 		// update metrics
-		Globals.metrics.frameTimes.push(Timer.stamp() - frameStart);
-		Globals.metrics.frameCount++;
+		Globals.metrics.PUSH(Metrics.FRAME_TIMES, Sys.time() * 1000.0 - frameStart);
+		Globals.metrics.INC(Metrics.FRAME_COUNT);
 	}
 
 	/**

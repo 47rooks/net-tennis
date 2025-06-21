@@ -155,6 +155,31 @@ class RingBufferTest extends Test {
 		Assert.equals(3, rb.count());
 		Assert.equals(0, rb.space());
 	}
+
+	public function testGetValue() {
+		var rb = new RingBuffer(4);
+		rb.push(1);
+		rb.push(2);
+
+		Assert.equals(2, rb.getValue(0));
+		Assert.equals(1, rb.getValue(1));
+	}
+
+	public function testGetValueAfterWrap() {
+		var rb = new RingBuffer(4);
+		rb.push(1);
+		rb.push(2);
+		rb.push(3);
+		rb.push(4);
+		rb.push(5);
+
+		Assert.equals(5, rb.getValue(0));
+		Assert.equals(4, rb.getValue(1));
+		Assert.equals(3, rb.getValue(2));
+	}
+
+	// public function testIterate() {}
+	// public function testIterateAfterWrap() {}
 }
 
 class TestObj {

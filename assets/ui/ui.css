@@ -1,0 +1,32 @@
+#HUDTitle {
+    font-size: 32px;
+    font-style: bold;
+    color: black;
+    opacity: 0.5;
+}
+
+#metricsHUD.vbox {
+    background-color: #FFFFFF;
+    opacity: 0.1;
+    border-radius: 32px;
+    padding: 10;
+}
+
+.tableview .label {
+    color: black;
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+.realtime-line-chart-comp {
+    background-color: #FFFFFF;
+}
+
+.tableview .even,
+.tableview .odd,
+.tableview .even:hover,
+.tableview .odd:hover,
+.tableview .compounditemrenderer:selected,
+.tableview .compounditemrenderer:selected .label {
+    background-color: #FFFFFF;
+}

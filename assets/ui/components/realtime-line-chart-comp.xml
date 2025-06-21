@@ -1,0 +1,5 @@
+<realtime-line-chart-comp width="100%">
+    <!-- FIXME the width=100% is required to render as designed but seems odd.
+               Investigate further.
+     -->
+</realtime-line-chart-comp>

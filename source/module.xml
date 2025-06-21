@@ -1,0 +1,17 @@
+<!--
+    HaxeUI custom component package definition
+ -->
+<module>
+    <components>
+        <component package="ui" />
+        <component package="ui.components" />
+    </components>
+    <resources>
+        <resource path="assets" prefix="assets" />
+    </resources>
+    <themes>
+        <default>
+            <style resource="assets/ui/ui.css" />
+        </default>
+    </themes>
+</module>
