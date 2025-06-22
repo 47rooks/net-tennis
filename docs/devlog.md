@@ -1,6 +1,9 @@
 # Devlog
 
 - [Devlog](#devlog)
+  - [6/22/2025 Metrics and Display](#6222025-metrics-and-display)
+    - [Measurement](#measurement)
+    - [Data Visualization](#data-visualization)
   - [6/8/2025 Refactor to allow single instance play](#682025-refactor-to-allow-single-instance-play)
   - [5/29/2025 A simulated player for testing](#5292025-a-simulated-player-for-testing)
     - [Behaviour Trees](#behaviour-trees)
@@ -12,6 +15,19 @@
     - [Run the `update()` loop or not](#run-the-update-loop-or-not)
     - [Waiting for packets in a fixed timestep game loop](#waiting-for-packets-in-a-fixed-timestep-game-loop)
 
+## 6/22/2025 Metrics and Display
+
+### Measurement
+
+If you cannot measure anything you cannot get more than a feeling that something is off or going slowly or quickly. So this iteration added a metrics layer providing initial support for counting frames, counting frames that could not complete processing because they aborted early, and measuring the frame update time. All of these will likely need refinement. Frames are counted the number of times `update()` is called. Aborted frames occur when there is not information for all players. In a network game this would commonly be due to network latency. If we miss a lot of messages in a lock-step game the whole game will slow down. Finally the frame time is currently measuring the time in the `update()` function. This will include complete and aborted frames. It will also exclude the `draw()` function time. This will need to be added either as a separate metric or combined. Using an elapsed time for these values rather than frame rates allows easy comparison to the frame budget. The frame budget is the amount of time you have to complete a frame in order to meet a specified FPS. For example, for 60fps you need to process all frames in under 16.6ms. 
+
+One thing to note here is that a number of the most recent frame times is kept - specifically the last 63 frames. This allows plotting a graph on which you can see the most recent frame times. In order to store these a RingBuffer is used. This is a very useful data structure and there are several subtleties in getting it right. One of those is that it must be sized in a power of two to permit lockless operation. This is useful for producer consumer use. I don't need that here yet but it's nice to work through and understand the structure properly. A second thing is that because of the way the head and tail pointers work one entry must be wasted to indicate empty versus full cases. So I wanted 64 samples, so the nearest was 63. I don't likely really need all that but it produces a good chart.
+
+### Data Visualization
+
+Once you have a way to collect data you need to be able to display it. This game will use HaxeUI as the UI, so I created a HaxeFlixel line chart and then wrapped it in a HaxeUI custom component. There is an OpenFL based `StatsGraph` in flixel and I basically recreated that using `FlxSpriteUtil.drawLine()`. It was interesting to see whether this SVG based drawing was going to impact performance. It doesn't yet but the game doesn't yet do much so there is lots of headroom. I wanted to have the metrics separated from the graphing so that the metrics could be used with different visualizations. I also wanted those to work without HaxeUI. As a consequence I built `RealtimeLineChart.hx` and then created a HaxeUI component `RealtimeLineChartComp.hx` to interface it to HaxeUI. The only significant issue here was making HaxeUI understand how big the chart actually was so that it could position other elements aroung the chart correctly. To do this the `RealtimeLineChart` class computes the minimum size it needs for the chart and axes labels and title. `RealtimeLineChartComp` relays this information back to HaxeUI by overriding the `validateComponentLayout()` function.
+
+In the future, statistics computed from the metrics will be added to the metrics layer. Also the metrics will likely be defined with macros.
 
 ## 6/8/2025 Refactor to allow single instance play
 

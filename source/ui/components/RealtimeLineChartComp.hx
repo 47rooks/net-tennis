@@ -47,13 +47,14 @@ class RealtimeLineChartComp extends VBox {
 	}
 
 	override public function validateComponentLayout():Bool {
+		var rv = super.validateComponentLayout();
 		trace('validating rtlc layout');
 		if (_dirtyAdjustedSize) {
 			trace('resizing');
 			resizeComponent(_cacheAdjustedWidth, _cacheAdjustedHeight);
 			_dirtyAdjustedSize = false;
 		}
-		return super.validateComponentLayout();
+		return rv;
 	}
 
 	override public function update(elapsed:Float) {
