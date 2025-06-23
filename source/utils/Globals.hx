@@ -1,7 +1,7 @@
 package utils;
 
-import utils.GameState;
 import metrics.Metrics;
+import utils.GameState;
 
 class Globals {
 	public static var metrics = new Metrics();

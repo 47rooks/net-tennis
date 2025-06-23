@@ -1,7 +1,7 @@
 package player;
 
-import utils.Globals.G;
 import haxe.io.Bytes;
+import utils.Globals.G;
 
 class NetworkPlayer extends Player {
 	public function new(id:Int) {

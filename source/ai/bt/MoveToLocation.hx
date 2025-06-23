@@ -1,9 +1,9 @@
 package ai.bt;
 
-import bitdecay.behavior.tree.leaf.LeafNode;
-import player.PlayerInputs;
 import bitdecay.behavior.tree.NodeStatus;
+import bitdecay.behavior.tree.leaf.LeafNode;
 import flixel.math.FlxPoint;
+import player.PlayerInputs;
 
 abstract class MoveToLocation extends LeafNode {
 	public function new() {}

@@ -11,8 +11,7 @@ import haxe.io.Error;
  * 
  * Currently, the socket errors defined in the HXCPP Socket.cpp are covered.
 **/
-enum NetworkError
-{
+enum NetworkError {
 	// HXCPP Socket errors
 	// FIXME these are currently hxcpp errors but really these define
 	// the network package errors that you might fold haxe.io and hxcpp and others into.
@@ -40,8 +39,7 @@ enum NetworkError
  * NetworkException reports all networking exceptions. The primary purpose of this class
  * is to unify all the networking errors under one class to simplify handler logic.
  */
-class NetworkException extends Exception
-{
+class NetworkException extends Exception {
 	/**
 	 * The network error detail enum. This is usually a simple mapping from the
 	 * lower layer target specific error code.
@@ -62,8 +60,7 @@ class NetworkException extends Exception
 	 * @param cause the causing Dynamic if it's not an Exception.
 	 * @param native any native error information
 	 */
-	function new(error:NetworkError, ?previous:Exception, ?cause:Dynamic, ?native:Any)
-	{
+	function new(error:NetworkError, ?previous:Exception, ?cause:Dynamic, ?native:Any) {
 		super(Std.string(error), previous, native);
 		this.error = error;
 		this.cause = cause;
@@ -74,17 +71,14 @@ class NetworkException extends Exception
 	 * @param err the original error object that was thrown
 	 * @return NetworkException
 	 */
-	static public function fromError(err:Dynamic):NetworkException
-	{
-		switch (err)
-		{
+	static public function fromError(err:Dynamic):NetworkException {
+		switch (err) {
 			case Std.isOfType(_, NetworkError) => true:
 				return new NetworkException(err);
 			case Std.isOfType(_, Eof) => true:
 				return new NetworkException(NetworkError.EOF);
 			case Std.isOfType(_, Error) => true:
-				switch (cast(err, Error))
-				{
+				switch (cast(err, Error)) {
 					case Blocked:
 						return new NetworkException(NetworkError.BLOCKING);
 					case OutsideBounds:
@@ -97,8 +91,7 @@ class NetworkException extends Exception
 			case Std.isOfType(_, ValueException) => true: // hxcpp via hx::Throw <some string>
 				var message = Std.string(err);
 				var gaiErrorRE = ~/^(.*):(.*)/;
-				switch (message)
-				{
+				switch (message) {
 					case "Invalid socket handle":
 						return new NetworkException(NetworkError.INVALID_SOCKET_HANDLE, err);
 					case "Blocking": // Socket

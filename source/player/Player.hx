@@ -1,8 +1,8 @@
 package player;
 
+import flixel.FlxG;
 import haxe.io.BytesBuffer;
 import utils.Globals.G;
-import flixel.FlxG;
 
 enum PlayerType {
 	USER;

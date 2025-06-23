@@ -17,11 +17,9 @@
      * simulate ball rise and fall in plan view - so change size as it moves
      * introduce bounce
      * allow bounce over receiver
-
    * stats/metrics
      * define and measure metrics using macros
      * add way to define and compute stats
      * add network, fps and sync related metrics
    * testing
      * CLI argument tests need updating
-   * Fix imports - enable oraganize imports on save and update all files

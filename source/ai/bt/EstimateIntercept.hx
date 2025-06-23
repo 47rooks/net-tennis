@@ -1,8 +1,8 @@
 package ai.bt;
 
-import flixel.math.FlxPoint;
 import bitdecay.behavior.tree.NodeStatus;
 import bitdecay.behavior.tree.leaf.LeafNode;
+import flixel.math.FlxPoint;
 
 class EstimateIntercept extends LeafNode {
 	static final TOP_NORMAL = FlxPoint.get(0.0, -1.0);

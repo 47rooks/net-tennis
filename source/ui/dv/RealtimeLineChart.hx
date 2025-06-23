@@ -1,12 +1,12 @@
 package ui.dv;
 
-import metrics.Metric.TimeseriesMetric;
 import flixel.FlxSprite;
-import flixel.math.FlxMath;
-import flixel.text.FlxText;
-import flixel.text.FlxBitmapFont;
-import flixel.util.FlxColor;
 import flixel.group.FlxSpriteContainer;
+import flixel.math.FlxMath;
+import flixel.text.FlxBitmapFont;
+import flixel.text.FlxText;
+import flixel.util.FlxColor;
+import metrics.Metric.TimeseriesMetric;
 
 using flixel.util.FlxSpriteUtil;
 

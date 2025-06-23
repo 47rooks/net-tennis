@@ -7,13 +7,11 @@ import sys.net.Socket;
 /**
  * Client represents a client peer. It permits connecting to a specified endpoint.
  */
-class Client extends Peer
-{
+class Client extends Peer {
 	/**
 	 * Constructor
 	 */
-	public function new()
-	{
+	public function new() {
 		super();
 		_socket = new Socket();
 	}
@@ -24,20 +22,15 @@ class Client extends Peer
 	 * @param ip the IP address or hostname to connect to
 	 * @param port the port number to connect to
 	 */
-	public function connect(ip:Host, port:Int)
-	{
-		try
-		{
+	public function connect(ip:Host, port:Int) {
+		try {
 			_socket.connect(ip, port);
 			_socket.setBlocking(false);
 			_socket.setFastSend(true);
 			connected = true;
-		}
-		catch (ve:ValueException)
-		{
+		} catch (ve:ValueException) {
 			var err = Std.string(ve);
-			if (err == "EOF")
-			{
+			if (err == "EOF") {
 				throw NetworkException.fromError(ve);
 			}
 		}

@@ -1,20 +1,20 @@
 package player;
 
-import utils.Globals.G;
-import ai.bt.MoveToRestLocation;
-import ai.bt.MoveToInterceptLocation;
-import flixel.math.FlxPoint;
-import flixel.FlxG;
 import ai.bt.EstimateIntercept;
-import bitdecay.behavior.tree.leaf.Condition;
-import bitdecay.behavior.tree.NodeStatus;
+import ai.bt.MoveToInterceptLocation;
+import ai.bt.MoveToRestLocation;
 import bitdecay.behavior.tree.BT;
-import bitdecay.behavior.tree.leaf.StatusAction;
-import bitdecay.behavior.tree.leaf.SetVariable;
-import bitdecay.behavior.tree.composite.Sequence;
 import bitdecay.behavior.tree.Node;
-import bitdecay.behavior.tree.context.BTContext;
+import bitdecay.behavior.tree.NodeStatus;
 import bitdecay.behavior.tree.composite.Fallback;
+import bitdecay.behavior.tree.composite.Sequence;
+import bitdecay.behavior.tree.context.BTContext;
+import bitdecay.behavior.tree.leaf.Condition;
+import bitdecay.behavior.tree.leaf.SetVariable;
+import bitdecay.behavior.tree.leaf.StatusAction;
+import flixel.FlxG;
+import flixel.math.FlxPoint;
+import utils.Globals.G;
 
 /**
  * An AI Tennis player.

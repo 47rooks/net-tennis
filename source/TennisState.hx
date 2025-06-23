@@ -1,29 +1,25 @@
 package;
 
-import lime.system.System;
-import metrics.Metrics;
-import ui.MetricsHUD;
-import player.PlayerInputs;
-import player.SimulatedPlayer;
-import player.Player;
-import utils.GameState;
-import utils.Globals;
-import haxe.ds.List;
-import haxe.Timer;
-import haxe.io.Bytes;
-import haxe.io.BytesBuffer;
-import network.Client;
-import network.Server;
-import sys.thread.Mutex;
-import network.NetworkException;
-import network.Listener;
-import sys.net.Host;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.math.FlxPoint;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import haxe.Timer;
+import metrics.Metrics;
+import network.Client;
+import network.Listener;
+import network.NetworkException;
+import network.Server;
+import player.Player;
+import player.PlayerInputs;
+import player.SimulatedPlayer;
+import sys.net.Host;
+import sys.thread.Mutex;
+import ui.MetricsHUD;
+import utils.GameState;
+import utils.Globals;
 
 class TennisState extends FlxState {
 	public var _ball:Ball;

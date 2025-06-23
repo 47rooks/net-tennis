@@ -1,16 +1,16 @@
 package;
 
-import haxe.ui.Toolkit;
-import player.NetworkPlayer;
-import player.SimulatedPlayer;
-import player.Player;
-import utils.GameState;
-import utils.Globals.G;
 import crashdumper.CrashDumper;
 import crashdumper.SessionData;
-import haxe.ValueException;
 import flixel.FlxGame;
+import haxe.ValueException;
+import haxe.ui.Toolkit;
 import openfl.display.Sprite;
+import player.NetworkPlayer;
+import player.Player;
+import player.SimulatedPlayer;
+import utils.GameState;
+import utils.Globals.G;
 
 class Main extends Sprite {
 	var _ipAddr:Null<String> = null;

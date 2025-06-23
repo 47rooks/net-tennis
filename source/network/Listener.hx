@@ -12,8 +12,7 @@ import sys.thread.Thread;
  * be unusable after that. If the application wants to reopen the socket a new `Listener`
  * must be created.
  */
-class Listener
-{
+class Listener {
 	var _listenSocket:Socket = null;
 	var _keepListening = true;
 
@@ -31,26 +30,21 @@ class Listener
 	 * @param onConnect callback function to handle successful connection
 	 * @param onError callback function to handle network errors
 	 */
-	public function new(ip:Host, port:Int, onConnect:(Server) -> Void, onError:(ne:NetworkException) -> Void)
-	{
+	public function new(ip:Host, port:Int, onConnect:(Server) -> Void, onError:(ne:NetworkException) -> Void) {
 		_onConnect = onConnect;
 		_onError = onError;
 
 		// Spawn listener thread
-		Thread.create(() ->
-		{
-			try
-			{
+		Thread.create(() -> {
+			try {
 				_listenSocket = new Socket();
 				_listenSocket.bind(ip, port);
 				_listenSocket.listen(MAX_LISTEN);
 
 				trace('server listening on ${_listenSocket.host().host}');
-				while (_keepListening)
-				{
+				while (_keepListening) {
 					var rv = Socket.select([_listenSocket], null, null, 0.1);
-					if (rv.read.length == 1 && rv.read[0] == _listenSocket)
-					{
+					if (rv.read.length == 1 && rv.read[0] == _listenSocket) {
 						var socket = _listenSocket.accept();
 						socket.setBlocking(false);
 						socket.setFastSend(true);
@@ -61,9 +55,7 @@ class Listener
 				_listenSocket.shutdown(true, true);
 				_listenSocket.close();
 				_listenSocket = null;
-			}
-			catch (err:Dynamic)
-			{
+			} catch (err:Dynamic) {
 				// Close listen socket
 				_listenSocket.shutdown(true, true);
 				_listenSocket.close();
@@ -80,8 +72,7 @@ class Listener
 	 * start listening again. `shutdown()` should be called before garbage collection
 	 * so as to not leak sockets.
 	 */
-	public function shutdown():Void
-	{
+	public function shutdown():Void {
 		_keepListening = false;
 	}
 }

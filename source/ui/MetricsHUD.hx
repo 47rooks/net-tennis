@@ -1,10 +1,10 @@
 package ui;
 
-import ui.components.RealtimeLineChartComp;
-import haxe.ui.containers.TableView;
 import haxe.ui.components.Label;
-import utils.Globals.G;
+import haxe.ui.containers.TableView;
 import haxe.ui.containers.VBox;
+import ui.components.RealtimeLineChartComp;
+import utils.Globals.G;
 
 // FIXME might just inline the xml here
 @:build(haxe.ui.macros.ComponentMacros.build("assets/ui/metrics-hud.xml"))
