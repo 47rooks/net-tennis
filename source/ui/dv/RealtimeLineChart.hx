@@ -14,11 +14,9 @@ class RealtimeLineChart extends FlxSpriteContainer {
 	@:isVar
 	public var series(get, set):Null<TimeseriesMetric<Float>> = null;
 
-	// public var series(get, set):Null<Array<Float>> = null;
-	@:isVar
-	public var fullWidth(get, set):Int;
-	@:isVar
-	public var fullHeight(get, set):Int;
+	var _fullWidth:Int;
+	var _fullHeight:Int;
+
 	@:isVar
 	public var fontSize(get, set):Int = 12;
 
@@ -64,7 +62,7 @@ class RealtimeLineChart extends FlxSpriteContainer {
 
 	public function new(x:Float, y:Float, backgroundColor:FlxColor) {
 		super(x, y);
-		trace('x=$x, y=$y, w=$fullWidth, h=$fullHeight');
+		trace('x=$x, y=$y, w=$_fullWidth, h=$_fullHeight');
 
 		_backgroundColor = backgroundColor;
 	}
@@ -93,13 +91,13 @@ class RealtimeLineChart extends FlxSpriteContainer {
 		_xAxisLabelHeight = 0;
 		_xAxisHeight = 1;
 		_xAxisY = _xAxisLabelHeight + 2;
-		_chartWidth = Std.int(fullWidth - _yAxisX);
-		_chartHeight = Std.int(fullHeight - (_xAxisLabelHeight + 2) - _xAxisHeight - testText.height);
+		_chartWidth = Std.int(_fullWidth - _yAxisX);
+		_chartHeight = Std.int(_fullHeight - (_xAxisLabelHeight + 2) - _xAxisHeight - testText.height);
 
 		_chart = new FlxSprite(0, 0);
 		_chart.makeGraphic(_chartWidth, _chartHeight, _backgroundColor);
 		_chart.setPosition(_yAxisX, testText.height);
-		_title.setPosition(x + (fullWidth - _title.width) / 2.0, y);
+		_title.setPosition(x + (_fullWidth - _title.width) / 2.0, y);
 
 		add(_title);
 		add(_max);
@@ -124,7 +122,7 @@ class RealtimeLineChart extends FlxSpriteContainer {
 		//       the title attribute must be processed before the init()
 		//       function runs. Harden this and init() to work either way
 		// _title.text = title;
-		// _title.setPosition(x + (fullWidth - _title.width) / 2.0, y);
+		// _title.setPosition(x + (_fullWidth - _title.width) / 2.0, y);
 
 		return title;
 	}
@@ -197,45 +195,29 @@ class RealtimeLineChart extends FlxSpriteContainer {
 		}
 	}
 
-	function set_fullWidth(value:Int):Int {
-		return fullWidth = value;
-	}
-
-	function get_fullWidth():Int {
-		return fullWidth;
-	}
-
-	function set_fullHeight(value:Int):Int {
-		return fullHeight = value;
-	}
-
-	function get_fullHeight():Int {
-		return fullHeight;
-	}
-
 	override public function set_width(value:Float):Float {
 		// Distribute the width over the chart components
 		var t = new FlxText(0, 0, 0, title, fontSize);
-		fullWidth = Std.int(value);
-		if (fullWidth < t.width) {
-			fullWidth = Std.int(t.width);
+		_fullWidth = Std.int(value);
+		if (_fullWidth < t.width) {
+			_fullWidth = Std.int(t.width);
 		}
-		trace('set fullwidth=${fullWidth} t.width=${t.width}');
+		trace('set fullwidth=${_fullWidth} t.width=${t.width}');
 		t.destroy();
-		return width = fullWidth;
+		return width = _fullWidth;
 	}
 
 	override public function set_height(value:Float):Float {
 		// Distribute the height over the chart components
 		var t = new FlxText(0, 0, 0, "9", fontSize);
 		var fourPitch = Std.int(4 * (t.height + 2));
-		fullHeight = Std.int(value);
+		_fullHeight = Std.int(value);
 		if (value < fourPitch) {
-			fullHeight = fourPitch;
+			_fullHeight = fourPitch;
 		}
-		trace('set fullheight to ${fullHeight} t.height=${t.height}');
+		trace('set fullheight to ${_fullHeight} t.height=${t.height}');
 		t.destroy();
-		return height = fullHeight;
+		return height = _fullHeight;
 	}
 
 	override public function get_width():Float {

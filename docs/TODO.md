@@ -17,6 +17,7 @@
      * simulate ball rise and fall in plan view - so change size as it moves
      * introduce bounce
      * allow bounce over receiver
+     * fix serve direction - it always goes the same way regardless of which player serves
    * stats/metrics
      * define and measure metrics using macros
      * add way to define and compute stats
